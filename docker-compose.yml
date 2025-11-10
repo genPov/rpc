@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  strapi:
+    build: ./portal
+    ports:
+      - "1337:1337"
+    volumes:
+      - ./portal/app:/usr/src/app
+    environment:
+      DATABASE_CLIENT: sqlite
+      DATABASE_FILENAME: ./data/data.db
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      NODE_ENV: production
+    depends_on:
+      mailhog:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:1337/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+
+  frontend:
+    build: ./portal/frontend
+    ports:
+      - "3000:3000"
+    environment:
+      STRAPI_API_URL: http://strapi:1337
+    depends_on:
+      strapi:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+    restart: unless-stopped
