@@ -1,15 +1,8 @@
 #빌드 방법
 
 ```bash
-export USER=$(whoami)
-export DIST=ubuntu
-export TAG=latest
-
-DOCKER_BUILDKIT=1 docker compose -f BaseStation/docker-compose.yml build base
-
-DOCKER_BUILDKIT=1 docker compose -f BaseStation/docker-compose.yml build build webui gnb ue
-
-docker compose -f BaseStation/docker-compose.yml up -d mongodb webui run
+cd BaseStation
+docker-compose build base build webui gnb ue
 ```
 
 http://localhost:9999로 접속한 후 Subscriber에서 open5gs-ue.yaml을 보고 변경
