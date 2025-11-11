@@ -17,6 +17,5 @@ UE-AMBR Uplink: 1
 UE-AMBR Uplink Unit: Gbps
 
 ```bash
-docker compose -f BaseStation/docker-compose.yml up -d gnb
-docker compose -f BaseStation/docker-compose.yml up -d ue
+docker-compose up -d mongodb webui run gnb ue
 ```
