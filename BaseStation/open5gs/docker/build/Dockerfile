@@ -11,5 +11,5 @@ COPY ./ /open5gs
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /wait
 RUN chmod +x /wait
-
+RUN chmod +x /root/setup.sh
 RUN meson build && ninja -C build install
