@@ -18,8 +18,7 @@ WORKDIR /app
 COPY . /app
 
 RUN python3 -m pip install --no-cache-dir -r /app/requirements.txt
-RUN --mount=type=cache,target=/root/.ccache \
-    cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_C_COMPILER_LAUNCHER=ccache \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache && \
     cmake --build build --parallel
