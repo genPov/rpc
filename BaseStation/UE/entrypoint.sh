@@ -5,6 +5,10 @@ CFG="${CFG:-/app/config/open5gs-ue.yaml}"
 BIN="/app/build/nr-ue"
 INTERVAL="${UE_RESTART_INTERVAL:-30}"
 
+# TUN cleanup options
+TUN_IFACE="${UE_TUN_IFACE:-uesimtun0}"
+TUN_CLEAN="${UE_TUN_CLEAN:-1}"
+
 # Background UDP sender
 SEND_PID=""
 
@@ -17,6 +21,16 @@ if [ -x /app/send_message.sh ]; then
   SEND_PID=$!
 fi
 
+cleanup_tun() {
+  [ "${TUN_CLEAN}" = "1" ] || return 0
+  if ip link show "${TUN_IFACE}" >/dev/null 2>&1; then
+    ip addr flush dev "${TUN_IFACE}" 2>/dev/null || true
+    ip link set "${TUN_IFACE}" down 2>/dev/null || true
+    ip link del "${TUN_IFACE}" 2>/dev/null || true
+    echo "[UE-ENTRY] cleaned ${TUN_IFACE}"
+  fi
+}
+
 term() {
   kill -TERM "$HANDLER_PID" 2>/dev/null || true
   kill -TERM "$SEND_PID" 2>/dev/null || true
@@ -27,6 +41,7 @@ term() {
     sleep 0.2
   done
   kill -KILL "$UE_PID" 2>/dev/null || true
+  cleanup_tun
   exit 0
 }
 trap term TERM INT
@@ -34,6 +49,8 @@ trap term TERM INT
 echo "[UE-ENTRY] restarting nr-ue every ${INTERVAL}s (cfg=${CFG})"
 
 while :; do
+  # ensure stale TUN from previous run is removed
+  cleanup_tun
   set +e
   "$BIN" -c "$CFG" &
   UE_PID=$!
@@ -58,5 +75,7 @@ while :; do
     done
     kill -KILL "$UE_PID" 2>/dev/null || true
   fi
+  # cleanup TUN after each cycle
+  cleanup_tun
 done
 

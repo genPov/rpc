@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGETS_CSV=${TARGETS_CSV:-"ue:4999"}
+TARGETS_CSV=${TARGETS_CSV:-"ue:4999"} #TODO change host -> ip
 GNB_LAT=${GNB_LAT:-30}
 GNB_LON=${GNB_LON:-120}
 INTERVAL=${INTERVAL:-10}
