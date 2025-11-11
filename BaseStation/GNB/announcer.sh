@@ -2,8 +2,8 @@
 set -euo pipefail
 
 TARGETS_CSV=${TARGETS_CSV:-"ue:4999"}
-GNB_LAT=${GNB_LAT:-37}
-GNB_LON=${GNB_LON:-126}
+GNB_LAT=${GNB_LAT:-30}
+GNB_LON=${GNB_LON:-120}
 INTERVAL=${INTERVAL:-10}
 JITTER=${JITTER:-2}
 
@@ -30,7 +30,6 @@ trap 'exit 0' TERM INT
 echo "[GNB-ANNOUNCER-SH] targets=$TARGETS_CSV lat=$GNB_LAT lon=$GNB_LON every ${INTERVAL}s"
 while :; do
   send_once
-  # integer jitter: [-JITTER, +JITTER]
   sleep_for=$(( INTERVAL + (RANDOM % (2*JITTER + 1)) - JITTER ))
   [ "$sleep_for" -lt 1 ] && sleep_for=1
   sleep "$sleep_for"
