@@ -7,12 +7,17 @@ services:
       - "1337:1337"
     volumes:
       - ./portal/app:/usr/src/app
+      - /usr/src/app/node_modules
     environment:
       DATABASE_CLIENT: sqlite
       DATABASE_FILENAME: ./data/data.db
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       NODE_ENV: production
+      APP_KEYS: Th1sIsAKeyForStrapi1,Th1sIsAKeyForStrapi2
+      API_TOKEN_SALT: Th1sIsAS4ltF0rAp1T0k3n
+      ADMIN_JWT_SECRET: Th1sIsAK3yF0rAdm1nJwt
+      JWT_SECRET: Th1sIsAK3yF0rJwt
     depends_on:
       mailhog:
         condition: service_started
