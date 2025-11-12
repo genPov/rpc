@@ -20,7 +20,7 @@ amf:
         - uri: http://127.0.0.200:7777
   ngap:
     server:
-      - address: 0.0.0.0
+      - address: 34.64.74.66
   metrics:
     server:
       - address: 127.0.0.5
