@@ -11,10 +11,16 @@ from typing import Any, Dict, List, Tuple
 import yaml
 
 BASE_PATH = OUT_PATH = Path("/app/config/open5gs-ue.yaml")
+
 UE_LAT = 37.5665
 UE_LON = 126.9780
 UDP_ANNOUNCE_PORT = 4999
 REGISTRY_FILE = Path("ue/gnb_registry.json")
+
+UE_ID = "ue-1"
+UDP_TARGET_IP = "34.64.74.66"
+UDP_TARGET_PORT = 9999
+SEND_INTERVAL_SEC = 10
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -69,6 +75,55 @@ def write_yaml_with_gnb_list(base_path: Path, out_path: Path, gnb_ips: List[str]
     out_path.write_text(yaml.safe_dump(base, sort_keys=False), encoding="utf-8")
 
 
+def send_message_once(ue_id: str, ue_lat: float, ue_lon: float) -> None:
+    msg_obj = {
+        "ue_id": ue_id,
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "lat": ue_lat,
+        "lon": ue_lon,
+        "msg": "Meet_in_front_of_the_Veritas_at_6PM_today.",
+    }
+    payload = json.dumps(msg_obj, ensure_ascii=False).encode("utf-8")
+    dst = (UDP_TARGET_IP, UDP_TARGET_PORT)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b"uesimtun0")
+    except Exception:
+        sock.close()
+        return
+
+    try:
+        sock.sendto(payload, dst)
+        print(f"[UE-SEND] sent via uesimtun0 → {dst}: {msg_obj}")
+    except Exception:
+        pass
+    finally:
+        sock.close()
+
+
+def start_periodic_sender(
+    ifname: str,
+    interval_sec: int,
+    ue_id: str,
+    ue_lat: float,
+    ue_lon: float,
+    stop_event: "threading.Event",
+) -> threading.Thread:
+    def run() -> None:
+        print(f"[UE-SEND] periodic sender on {ifname}, every {interval_sec}s")
+        while not stop_event.is_set():
+            send_message_once(ue_id, ue_lat, ue_lon)
+            for _ in range(interval_sec):
+                if stop_event.is_set():
+                    break
+                time.sleep(1.0)
+
+    t = threading.Thread(target=run, name="UePeriodicSender", daemon=True)
+    t.start()
+    return t
+
+
 def start_udp_announce_listener(
     host: str,
     port: int,
@@ -92,19 +147,16 @@ def start_udp_announce_listener(
                 data, addr = sock.recvfrom(65535)
             except socket.timeout:
                 continue
-            except Exception as e:
-                print(f"[UE-GNB][UDP] recv error: {e}")
+            except Exception:
                 continue
             try:
                 payload = json.loads(data.decode("utf-8", errors="ignore"))
             except Exception:
-                print("[UE-GNB][UDP] invalid JSON payload")
                 continue
             ip = str(payload.get("ip") or addr[0])
             lat = payload.get("lat")
             lon = payload.get("lon")
             if not ip or not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
-                print("[UE-GNB][UDP] missing or invalid ip/lat/lon")
                 continue
             try:
                 reg = load_registry()
@@ -113,12 +165,13 @@ def start_udp_announce_listener(
                 ips = [p for p, _ in sorted_gnbs_by_distance(reg, ue_lat, ue_lon)]
                 write_yaml_with_gnb_list(base_path, out_path, ips)
                 print(f"[UE-GNB][UDP] applied from {ip} -> {out_path}")
-            except Exception as e:
-                print(f"[UE-GNB][UDP] apply error: {e}")
+            except Exception:
+                pass
         try:
             sock.close()
         except Exception:
             pass
+
     t = threading.Thread(target=run, name="GnbUdpAnnounce", daemon=True)
     t.start()
     return t
@@ -128,9 +181,20 @@ def main() -> None:
     print(f"[UE-GNB] UDP announce on 0.0.0.0:{UDP_ANNOUNCE_PORT} (UE @ {UE_LAT},{UE_LON})")
     print(f"[UE-GNB] base={BASE_PATH} -> out={OUT_PATH}")
     stop_event = threading.Event()
+
     udp_thread = start_udp_announce_listener(
         "0.0.0.0", UDP_ANNOUNCE_PORT, float(UE_LAT), float(UE_LON), BASE_PATH, OUT_PATH, stop_event
     )
+
+    sender_thread = start_periodic_sender(
+        "uesimtun0",
+        SEND_INTERVAL_SEC,
+        UE_ID,
+        float(UE_LAT),
+        float(UE_LON),
+        stop_event,
+    )
+
     try:
         while True:
             time.sleep(86400)
@@ -138,12 +202,12 @@ def main() -> None:
         pass
     finally:
         stop_event.set()
-        try:
-            udp_thread.join(timeout=2.0)
-        except Exception:
-            pass
+        for t in (udp_thread, sender_thread):
+            try:
+                t.join(timeout=2.0)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
     main()
-

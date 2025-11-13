@@ -9,17 +9,8 @@ INTERVAL="${UE_RESTART_INTERVAL:-30}"
 TUN_IFACE="${UE_TUN_IFACE:-uesimtun0}"
 TUN_CLEAN="${UE_TUN_CLEAN:-1}"
 
-# Background UDP sender
-SEND_PID=""
-
 python3 /app/request_handler.py &
 HANDLER_PID=$!
-
-# Start message sender if present
-if [ -x /app/send_message.sh ]; then
-  /app/send_message.sh &
-  SEND_PID=$!
-fi
 
 cleanup_tun() {
   [ "${TUN_CLEAN}" = "1" ] || return 0
@@ -33,7 +24,6 @@ cleanup_tun() {
 
 term() {
   kill -TERM "$HANDLER_PID" 2>/dev/null || true
-  kill -TERM "$SEND_PID" 2>/dev/null || true
   kill -TERM "$UE_PID" 2>/dev/null || true
   # give some time to exit
   for _ in {1..10}; do

@@ -25,7 +25,4 @@ RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
 
 # run request handler once, restart nr-ue every 30s
 RUN chmod +x /app/entrypoint.sh
-
-# send message every 10s
-RUN chmod +x /app/send_message.sh
 CMD ["/bin/bash","-lc","/app/entrypoint.sh"]
