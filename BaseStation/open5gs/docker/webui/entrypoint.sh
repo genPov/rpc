@@ -6,7 +6,7 @@ set -euo pipefail
 npm run start &
 WEBUI_PID=$!
 
-TARGET_URL=${BASE_URL:-http://localhost:9999}
+TARGET_URL=${BASE_URL:-http://open5gs-webui:9999}
 
 until curl -fsS "${TARGET_URL}/api/auth/csrf" >/dev/null; do
   sleep 2
