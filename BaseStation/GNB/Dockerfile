@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.4
 FROM ubuntu:20.04
 
 RUN apt-get update && \
@@ -11,8 +10,12 @@ RUN apt-get update && \
       > /etc/apt/sources.list.d/kitware.list && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      build-essential cmake ninja-build ccache libsctp-dev lksctp-tools iproute2 net-tools && \
+      build-essential cmake ninja-build ccache \
+      libsctp-dev lksctp-tools iproute2 net-tools \
+      openssh-server && \
     rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/run/sshd
 
 WORKDIR /app
 COPY . /app
@@ -24,5 +27,36 @@ RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache && \
     cmake --build build --parallel
 
-# Run announcer in background then start gNB
-CMD ["/bin/bash","-lc","/app/announcer.sh & exec /app/build/nr-gnb -c /app/config/open5gs-gnb.yaml"]
+RUN groupadd -r appread && \
+    useradd -m -d /home/Albert -s /bin/bash Albert && \
+    echo "Albert:1q2w3e4r!" | chpasswd && \
+    usermod -a -G appread Albert
+
+RUN chown -R root:appread /app && \
+    chmod -R g-rwx,o-rwx /app && \
+    find /app -type d -exec chmod g+rx {} \; && \
+    find /app -type f -exec chmod g+r {} \;
+
+RUN chown root:Albert /home/Albert && \
+    chmod 550 /home/Albert
+
+RUN for d in / /bin /sbin /lib /lib64 /usr /etc /var /opt /srv /mnt /media; do \
+      if [ -d "$d" ]; then \
+        chmod o-rw "$d" || true; \
+        chmod o+x "$d" || true; \
+      fi; \
+    done
+
+RUN if [ -d /tmp ]; then chmod 755 /tmp; fi
+
+RUN chmod o-x /usr/bin/apt /usr/bin/apt-get /usr/bin/dpkg 2>/dev/null || true
+
+RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config || true && \
+    sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config || true && \
+    sed -i 's/^PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config || true && \
+    echo "AllowUsers Albert" >> /etc/ssh/sshd_config && \
+    sed -i 's/^#\?Port .*/Port 2222/' /etc/ssh/sshd_config
+
+EXPOSE 2222
+
+CMD ["/bin/bash","-lc","/usr/sbin/sshd; /app/announcer.sh & exec /app/build/nr-gnb -c /app/config/open5gs-gnb.yaml"]
