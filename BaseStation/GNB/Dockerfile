@@ -32,11 +32,6 @@ RUN groupadd -r appread && \
     echo "Albert:1q2w3e4r!" | chpasswd && \
     usermod -a -G appread Albert
 
-RUN mkdir -p /home/Albert/.ssh && \
-    chmod 700 /home/Albert/.ssh
-COPY albert.pub /home/Albert/.ssh/authorized_keys
-RUN chown -R Albert:Albert /home/Albert/.ssh && \
-    chmod 600 /home/Albert/.ssh/authorized_keys
 
 RUN chown -R root:appread /app && \
     chmod -R g-rwx,o-rwx /app && \

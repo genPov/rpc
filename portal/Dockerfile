@@ -33,7 +33,12 @@ RUN echo "HolyShield{C0ngr4ts_0n_entry!_Th3_R34l_Ch4ll3nge_Beg1ns_fr0m_n0w}" > /
 RUN echo "HolyShield{Pr1v1l3ge_3scalation_Success_0nly_0n3_St3p_L3ft}" > /root/flag2.txt && \
     chmod 600 /root/flag2.txt
 
+RUN echo "GNB_Credential: Albert|37effaf6c6c1f09876cef43350c14ebb6a5f5840|sha1" > /root/credential.txt && \
+    chmod 600 /root/credential.txt
+
 RUN echo "orpheus ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+
 
 USER orpheus
 
