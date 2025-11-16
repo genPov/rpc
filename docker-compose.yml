@@ -1,9 +1,6 @@
-version: "3.8"
-
 services:
   strapi:
     build: ./portal
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" # portal 쪽에서는 이부분 추가했습니다
     ports:
       - "1337:1337"
     volumes:
@@ -131,49 +128,49 @@ services:
         tail -F /usr/local/var/log/open5gs/*.log
       "
 
-  test:
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
-    depends_on:
-      - mongodb
-    environment:
-      DB_URI: mongodb://mongodb/open5gs
-      WAIT_HOSTS: mongodb:27017
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - "/dev/net/tun:/dev/net/tun"
-    hostname: open5gs-test
-    command: /bin/bash -c "/root/setup.sh; cd /open5gs/build && /wait && meson test -v"
+  # test:
+  #   image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+  #   depends_on:
+  #     - mongodb
+  #   environment:
+  #     DB_URI: mongodb://mongodb/open5gs
+  #     WAIT_HOSTS: mongodb:27017
+  #   cap_add:
+  #     - NET_ADMIN
+  #   devices:
+  #     - "/dev/net/tun:/dev/net/tun"
+  #   hostname: open5gs-test
+  #   command: /bin/bash -c "/root/setup.sh; cd /open5gs/build && /wait && meson test -v"
 
-  dev:
-    build:
-      context: ./BaseStation/open5gs/docker/${DIST-ubuntu}/${TAG-latest}/dev
-      args:
-        dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-dev
-    depends_on:
-      - mongodb
-    environment:
-      - DB_URI=mongodb://mongodb/open5gs
-      - DISPLAY=${DISPLAY:-}
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - "/dev/net/tun:/dev/net/tun"
-    volumes:
-      - home:/home/${USER}
-      - ${HOME}:/mnt
-    hostname: open5gs-dev
-    user: ${USER}
-    entrypoint: /bin/bash -c "/bin/bash -c \"$${@}\""
-    command: |
-      /bin/bash -c "
-          sudo chmod 666 /dev/net/tun
-          sudo /root/setup.sh
-          /bin/bash || exit 0
-      "
+  # dev:
+  #   build:
+  #     context: ./BaseStation/open5gs/docker/${DIST-ubuntu}/${TAG-latest}/dev
+  #     args:
+  #       dist: ${DIST-ubuntu}
+  #       tag: ${TAG-latest}
+  #       username: ${USER}
+  #   image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-dev
+  #   depends_on:
+  #     - mongodb
+  #   environment:
+  #     - DB_URI=mongodb://mongodb/open5gs
+  #     - DISPLAY=${DISPLAY:-}
+  #   cap_add:
+  #     - NET_ADMIN
+  #   devices:
+  #     - "/dev/net/tun:/dev/net/tun"
+  #   volumes:
+  #     - home:/home/${USER}
+  #     - ${HOME}:/mnt
+  #   hostname: open5gs-dev
+  #   user: ${USER}
+  #   entrypoint: /bin/bash -c "/bin/bash -c \"$${@}\""
+  #   command: |
+  #     /bin/bash -c "
+  #         sudo chmod 666 /dev/net/tun
+  #         sudo /root/setup.sh
+  #         /bin/bash || exit 0
+  #     "
 
   gnb:
     build:
