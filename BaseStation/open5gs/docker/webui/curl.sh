@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="http://localhost:9999"
+BASE_URL="http://open5gs-webui:9999"
 
 csrfRes=$(curl -s -X GET "$BASE_URL/api/auth/csrf" \
     -c cookie.txt \
