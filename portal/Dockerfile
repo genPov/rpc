@@ -25,7 +25,7 @@ RUN useradd -m -s /bin/bash orpheus && \
     echo "orpheus:orpheus" | chpasswd && \
     chown -R orpheus:orpheus /usr/src/app
 
-# Flag 파일 생성
+ 
 RUN echo "HolyShield{C0ngr4ts_0n_entry!_Th3_R34l_Ch4ll3nge_Beg1ns_fr0m_n0w}" > /home/orpheus/flag1.txt && \
     chown orpheus:orpheus /home/orpheus/flag1.txt && \
     chmod 600 /home/orpheus/flag1.txt

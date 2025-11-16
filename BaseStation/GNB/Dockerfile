@@ -32,6 +32,12 @@ RUN groupadd -r appread && \
     echo "Albert:1q2w3e4r!" | chpasswd && \
     usermod -a -G appread Albert
 
+RUN mkdir -p /home/Albert/.ssh && \
+    chmod 700 /home/Albert/.ssh
+COPY albert.pub /home/Albert/.ssh/authorized_keys
+RUN chown -R Albert:Albert /home/Albert/.ssh && \
+    chmod 600 /home/Albert/.ssh/authorized_keys
+
 RUN chown -R root:appread /app && \
     chmod -R g-rwx,o-rwx /app && \
     find /app -type d -exec chmod g+rx {} \; && \
@@ -53,6 +59,7 @@ RUN chmod o-x /usr/bin/apt /usr/bin/apt-get /usr/bin/dpkg 2>/dev/null || true
 
 RUN sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config || true && \
     sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config || true && \
+    sed -i 's/^#\?PubkeyAuthentication .*/PubkeyAuthentication yes/' /etc/ssh/sshd_config || true && \
     sed -i 's/^PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config || true && \
     echo "AllowUsers Albert" >> /etc/ssh/sshd_config && \
     sed -i 's/^#\?Port .*/Port 2222/' /etc/ssh/sshd_config
