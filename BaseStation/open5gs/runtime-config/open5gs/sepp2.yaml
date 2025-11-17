@@ -23,10 +23,10 @@ sepp:
       - address: 127.0.2.250
         port: 7777
     client:
-#      nrf:
-#        - uri: http://127.0.0.10:7777
-      scp:
-        - uri: http://127.0.0.200:7777
+      nrf:
+        - uri: http://127.0.0.10:7777
+#      scp:
+#        - uri: http://127.0.0.200:7777
   n32:
     server:
       - sender: sepp2.localdomain
