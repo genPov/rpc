@@ -3,9 +3,20 @@ set -euo pipefail
 
 BASE_URL="http://open5gs-webui:9999"
 
-csrfRes=$(curl -s -X GET "$BASE_URL/api/auth/csrf" \
-    -c cookie.txt \
-    -H "X-CSRF-TOKEN: undefined")
+csrfRes=""
+for _ in $(seq 1 60); do
+    if csrfRes=$(curl -s -X GET "$BASE_URL/api/auth/csrf" \
+        -c cookie.txt \
+        -H "X-CSRF-TOKEN: undefined"); then
+        break
+    fi
+    sleep 2
+done
+
+[ -n "$csrfRes" ] || {
+    echo "Failed to contact WebUI at $BASE_URL" >&2
+    exit 1
+}
 
 csrfToken=$(echo $csrfRes \
     | grep -o '"csrfToken":"[^"]*"' \
