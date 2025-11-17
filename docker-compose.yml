@@ -69,6 +69,12 @@ services:
     volumes:
       - mongodb:/data/db
       - ./BaseStation/open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   webui:
     build:
@@ -108,8 +114,10 @@ services:
   run:
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
     depends_on:
-      - mongodb
-      - webui
+      mongodb:
+        condition: service_healthy
+      webui:
+        condition: service_started
     network_mode: host
     cap_add:
       - NET_ADMIN
