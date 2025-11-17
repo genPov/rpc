@@ -109,6 +109,7 @@ services:
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
     depends_on:
       - mongodb
+      - webui
     network_mode: host
     cap_add:
       - NET_ADMIN
@@ -122,7 +123,7 @@ services:
     command: >-
       /bin/bash -c "
         /root/setup.sh && \
-        for svc in nrf ausf udm udr pcf nssf amf smf bsf scp upf; do \
+        for svc in nrf scp udr udm ausf pcf nssf amf smf bsf upf; do \
           /usr/local/bin/open5gs-$${svc}d -c /usr/local/etc/open5gs/$${svc}.yaml -D; \
         done; \
         tail -F /usr/local/var/log/open5gs/*.log
