@@ -13,7 +13,7 @@ imei: '356938035643803'
 imeiSv: '4370816125816151'
 tunNetmask: 255.255.255.0
 gnbSearchList:
-- 127.0.0.1
+- 104.154.224.144
 uacAic:
   mps: false
   mcs: false
