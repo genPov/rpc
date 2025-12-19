@@ -4,7 +4,7 @@ services:
     ports:
       - "1337:1337"
     volumes:
-      - ./portal/app:/usr/src/app
+      - ${RPC_ROOT:-.}/portal/app:/usr/src/app
       - /usr/src/app/node_modules
     environment:
       DATABASE_CLIENT: sqlite
@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     volumes:
       - mongodb:/data/db
-      - ./BaseStation/open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ${RPC_ROOT:-.}/BaseStation/open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1})"]
       interval: 10s
@@ -115,7 +115,7 @@ services:
     environment:
       DB_URI: mongodb://localhost/open5gs
     volumes:
-      - ./BaseStation/open5gs/runtime-config/open5gs:/usr/local/etc/open5gs
+      - ${RPC_ROOT:-.}/BaseStation/open5gs/runtime-config/open5gs:/usr/local/etc/open5gs
     hostname: open5gs-run
     command: >-
       /bin/bash -c "
@@ -181,9 +181,9 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     restart: unless-stopped
     volumes:
-      - ./BaseStation/GNB/config:/app/config:ro
+      - ${RPC_ROOT:-.}/BaseStation/GNB/config:/app/config:ro
     environment:
-      TARGETS_CSV: 34.47.104.102:4999
+      TARGETS_CSV: ${SERVER_IP-34.64.143.22}:4999
     command:
       - /bin/bash
       - -lc
@@ -200,13 +200,13 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     restart: unless-stopped
     volumes:
-      - ./BaseStation/UE/config:/app/config
+      - ${RPC_ROOT:-.}/BaseStation/UE/config:/app/config
     command:
       - /bin/bash
       - -lc
       - sed -i 's/\r$//' /app/entrypoint.sh && exec bash /app/entrypoint.sh
     environment:
-      - UDP_TARGET_IP=34.47.104.102:4999
+      - UDP_TARGET_IP=${SERVER_IP-34.64.143.22}:4999
 
 volumes:
   mongodb: {}

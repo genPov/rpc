@@ -4,6 +4,8 @@
 ```bash
 export DOCKERHUB_USER=catcert
 export IMAGE_TAG=latest
+export RPC_ROOT="$(pwd)"
+export SERVER_IP=34.64.143.22
 ```
 
 #### 2단계 (한 번에 Pull)
