@@ -1,4 +1,4 @@
-# 빌드/실행 방법
+﻿# 빌드/실행 방법 (Docker Hub 이미지 Pull)
 
 #### 1단계
 ```bash
@@ -6,9 +6,16 @@ export DOCKERHUB_USER=catcert
 export IMAGE_TAG=latest
 ```
 
-#### 2단계
+#### 2단계 (한 번에 Pull)
 ```bash
 docker compose pull
+```
+
+#### 2단계 (서버가 힘들면 서비스별 Pull)
+```bash
+for s in mongodb webui run gnb ue strapi frontend mailhog; do
+  docker compose pull --policy missing -q "$s" || exit 1
+done
 ```
 
 #### 3단계
