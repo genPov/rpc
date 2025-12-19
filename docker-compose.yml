@@ -1,6 +1,6 @@
 services:
   strapi:
-    build: ./portal
+    image: ${DOCKERHUB_USER-catcert}/open5gs-strapi:${IMAGE_TAG-latest}
     ports:
       - "1337:1337"
     volumes:
@@ -35,7 +35,7 @@ services:
           memory: 512M
 
   frontend:
-    build: ./portal/frontend
+    image: ${DOCKERHUB_USER-catcert}/open5gs-frontend:${IMAGE_TAG-latest}
     ports:
       - "3000:3000"
     environment:
@@ -77,11 +77,12 @@ services:
       start_period: 5s
 
   webui:
-    build:
-      context: ./BaseStation/open5gs
-      dockerfile: docker/webui/Dockerfile
-    image: ${USER}/open5gs-webui
+    image: ${DOCKERHUB_USER-catcert}/open5gs-webui:${IMAGE_TAG-latest}
     container_name: open5gs-webui
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - sed -i 's/\r$//' /usr/local/bin/webui-entrypoint.sh /usr/local/bin/seed-subscriber.sh && exec bash /usr/local/bin/webui-entrypoint.sh
     depends_on:
       - mongodb
     ports:
@@ -92,27 +93,15 @@ services:
     restart: unless-stopped
 
   base:
-    build:
-      context: ./BaseStation/open5gs/docker/${DIST-ubuntu}/${TAG-latest}/base
-      args:
-        dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-base
+    image: ${DOCKERHUB_USER-catcert}/open5gs-base:${IMAGE_TAG-latest}
     command: /bin/bash -c "echo 'base' services"
 
   build:
-    build:
-      context: ./BaseStation/open5gs
-      dockerfile: docker/build/Dockerfile
-      args:
-        dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+    image: ${DOCKERHUB_USER-catcert}/open5gs-build:${IMAGE_TAG-latest}
     command: /bin/bash -c "echo 'build' services"
 
   run:
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+    image: ${DOCKERHUB_USER-catcert}/open5gs-build:${IMAGE_TAG-latest}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -182,9 +171,7 @@ services:
   #     "
 
   gnb:
-    build:
-      context: ./GNB
-    image: ${USER}/ueransim-gnb
+    image: ${DOCKERHUB_USER-catcert}/open5gs-gnb:${IMAGE_TAG-latest}
     depends_on:
       - run
     network_mode: host
@@ -194,16 +181,16 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     restart: unless-stopped
     volumes:
-      - ./GNB/config:/app/config:ro
+      - ./BaseStation/GNB/config:/app/config:ro
     environment:
-      AMF_IP: 실제 IP
-      TARGETS_CSV: 실제 IP:4999
-    command: ["/bin/bash", "/app/run-gnb.sh"]
+      TARGETS_CSV: 34.47.104.102:4999
+    command:
+      - /bin/bash
+      - -lc
+      - tr -d '\r' < /app/config/open5gs-gnb.yaml > /tmp/open5gs-gnb.in.yaml && sed -i 's/\r$//' /app/run-gnb.sh && exec /bin/bash /app/run-gnb.sh /tmp/open5gs-gnb.in.yaml
 
   ue:
-    build:
-      context: ./BaseStation/UE
-    image: ${USER}/ueransim-ue
+    image: ${DOCKERHUB_USER-catcert}/open5gs-ue:${IMAGE_TAG-latest}
     depends_on:
       - gnb
     network_mode: host
@@ -214,8 +201,12 @@ services:
     restart: unless-stopped
     volumes:
       - ./BaseStation/UE/config:/app/config
+    command:
+      - /bin/bash
+      - -lc
+      - sed -i 's/\r$//' /app/entrypoint.sh && exec bash /app/entrypoint.sh
     environment:
-      - UDP_TARGET_IP=실제 IP:4999
+      - UDP_TARGET_IP=34.47.104.102:4999
 
 volumes:
   mongodb: {}
