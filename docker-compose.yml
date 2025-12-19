@@ -183,7 +183,7 @@ services:
 
   gnb:
     build:
-      context: ./BaseStation/GNB
+      context: ./GNB
     image: ${USER}/ueransim-gnb
     depends_on:
       - run
@@ -194,9 +194,11 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     restart: unless-stopped
     volumes:
-      - ./BaseStation/GNB/config:/app/config:ro
+      - ./GNB/config:/app/config:ro
     environment:
-      - TARGETS_CSV=127.0.0.1:4999
+      AMF_IP: 실제 IP
+      TARGETS_CSV: 실제 IP:4999
+    command: ["/bin/bash", "/app/run-gnb.sh"]
 
   ue:
     build:
@@ -213,7 +215,7 @@ services:
     volumes:
       - ./BaseStation/UE/config:/app/config
     environment:
-      - UDP_TARGET_IP=127.0.0.1:4999
+      - UDP_TARGET_IP=실제 IP:4999
 
 volumes:
   mongodb: {}
